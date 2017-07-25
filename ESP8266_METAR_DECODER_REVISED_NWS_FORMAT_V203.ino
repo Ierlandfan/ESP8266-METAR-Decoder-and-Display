@@ -1,43 +1,50 @@
 // (C) D Bird 2016
-// METAR decoder and display for Arduino and an Adafruit 2.8" TFT Display
-//
+// METAR decoder and display for ESP8266 general TFT Display's
+// This one is made for 2.8" displays and uses Bodmer's eTFT_sPI library for drivng the TFT
+// Ierlandfan 2018
 ////////////////////////////////////////////////////////////////////////////////////
-String version_num = "METAR ESP Version 2.03";
+String version_num = "METAR ESP8266 Version 2.05 ";
 #include <ESP8266WiFi.h>
-#include <HttpClient.h>
-#include "SPI.h"
-#include "Adafruit_GFX.h"
-#include "Adafruit_ILI9341.h"
+#include <SPI.h>
+#include <Adafruit_GFX.h>
+#include <TFT_eSPI.h> // Hardware-specific library
+#include <XPT2046_Touchscreen.h>
+     
+#define PIN_D0 16
+#define PIN_D1  5
+#define PIN_D2  4 //TOUCH_CS
+#define PIN_D3  0 //TFT_DC
+#define PIN_D4  2
+#define PIN_D5 14 // SCLK
+#define PIN_D6 12 // MISO
+#define PIN_D7 13 // MOSI
+#define PIN_D8 15 //TFT_CS
+#define PIN_D9  3
+#define PIN_D10 1
+#define USE_HW_CS
 
-#define _CS   D0 // D0 goes to TFT CS
-#define _DC   D8 // D8 goes to TFT DC
-#define _mosi D7 // D7 goes to TFT MOSI
-#define _sclk D5 // D5 goes to TFT SCK/CLK
-#define _rst     // RST on ESP goes to TFT RESET
-#define _miso    // Not connected
-//       3.3V    // Goes to TFT LED  
-//       5v      // Goes to TFT Vcc
-//       Gnd     // Goes to TFT Gnd        
+#define TOUCH_CS  PIN_D2 // XPT2046 chip select
+#define TFT_CS  PIN_D8 // TFT chip select
+#define TFT_DC PIN_D3 // TFT DC
+#define LED_PIN PIN_D0 // LED not used
 
-// Use hardware SPI (on Uno, #13, #12, #11) and the above for CS/DC
-Adafruit_ILI9341 tft = Adafruit_ILI9341(_CS, _DC);
+TFT_eSPI tft = TFT_eSPI();
 
-const char *ssid     = "********";
-const char *password = "********";
+const char *ssid     = "INSERT_YOUR_SSID_HERE";
+const char *password = "INSERT_YOUR_WIFI_PASSWORD_HERE";
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xF1, 0xED };
 
 WiFiClient client;
-HttpClient http(client); 
 
 const int centreX  = 274; // Location of the compass display on screen
 const int centreY  = 60;
 const int diameter = 41;  // Size of the compass
 
 // Assign human-readable names to common 16-bit color values:
-#define	BLACK       0x0000
-#define	RED         0xF800
-#define	GREEN       0x07E0
+#define  BLACK       0x0000
+#define RED         0xF800
+#define GREEN       0x07E0
 #define BLUE        0x001F
 #define CYAN        0x07FF
 #define MAGENTA     0xF81F
@@ -45,7 +52,7 @@ const int diameter = 41;  // Size of the compass
 #define WHITE       0xFFFF
 
 void setup(){
-  Serial.begin(9600);
+  Serial.begin(115200);
   tft.begin();
   tft.setRotation(3);
   clear_screen();
@@ -58,11 +65,11 @@ void loop(){
   // Change these METAR Stations to suit your needs see: Use this URL address = ftp://tgftp.nws.noaa.gov/data/observations/metar/decoded/ 
   // to establish your list of sites to retrieve (you must know the 4-letter 
   // site dentification)
-  GET_METAR("EGGD", "1 EGGD Bristol/Lulsgate");
-  GET_METAR("EGVN", "2 EGVN Brize Norton");
-  GET_METAR("EGCC", "3 EGCC Manchester Airport");
-  GET_METAR("EGHQ", "4 EGHQ Newquay");
-  GET_METAR("EGSS", "5 EGSS Stansted");
+  GET_METAR("EHKD", "1 EHKD Den Helder/De Kooy");
+  GET_METAR("EHAM", "2 EHAM Schiphol");
+  GET_METAR("EHLE", "3 EHLE Lelstad");
+  //GET_METAR("EGHQ", "4 EGHQ Newquay");
+  //GET_METAR("EGSS", "5 EGSS Stansted");
 } 
 
 //----------------------------------------------------------------------------------------------------
@@ -111,9 +118,9 @@ void GET_METAR(String station, String Name) { //client function to send/receive 
       <elevation_m>124.0</elevation_m>
     </METAR>
     */
-  metar_status = http.find("<METAR>");
-  http.find("<raw_text>");
-  if (metar_status == true) metar = http.readStringUntil('<'); else metar = "Station off-air";
+  metar_status = client.find("<METAR>");
+  client.find("<raw_text>");
+  if (metar_status == true) metar = client.readStringUntil('<'); else metar = "Station off-air";
   client.flush();
   client.stop();  // Stop client
   clear_screen(); // Clear screen
@@ -651,5 +658,4 @@ void display_progress (String title, int percent) {
  e.g. -SHRA - Light showers of rain 
  TSRA - Thunderstorms and rain. 
 */
-
 
