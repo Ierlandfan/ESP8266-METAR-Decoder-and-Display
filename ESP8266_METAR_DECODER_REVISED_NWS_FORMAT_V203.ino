@@ -1,7 +1,7 @@
 // (C) D Bird 2016
 // METAR decoder and display for ESP8266 general TFT Display's
 // This one is made for 2.8" displays and uses Bodmer's eTFT_sPI library for drivng the TFT
-// Ierlandfan 2018
+// Ierlandfan 25-7 2018
 ////////////////////////////////////////////////////////////////////////////////////
 String version_num = "METAR ESP8266 Version 2.05 ";
 #include <ESP8266WiFi.h>
